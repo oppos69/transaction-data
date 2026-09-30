@@ -439,10 +439,14 @@ def build_row(date_compact: str, fetch_sina: bool) -> dict:
         row["limit_up"] = zt
     if dt is not None:
         row["limit_down"] = dt
-    # sina阈值兜底（仅当天池不可用时）
-    if sina_stats and row["limit_up"] is None and row["limit_down"] is None:
-        row["limit_up"] = sina_stats["limit_up"]
-        row["limit_down"] = sina_stats["limit_down"]
+    # sina阈值兜底：逐列独立补。原先要求「两池都空」才兜底，导致单池失败（如
+    # 2026-09-30 涨停池接口报错、跌停池正常）时该列留空 —— 阈值口径虽粗于池计数，
+    # 但比空缺好，且与「双池皆空」兜底本就用同一口径。
+    if sina_stats:
+        if row["limit_up"] is None:
+            row["limit_up"] = sina_stats["limit_up"]
+        if row["limit_down"] is None:
+            row["limit_down"] = sina_stats["limit_down"]
 
     # 中位数股价：优先市场概况CSV（2026-09-14 起才真实，此前列为0；
     # 2026-09-10 有脏值 484.68，需范围校验），否则用当天 sina 快照
