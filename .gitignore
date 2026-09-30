@@ -1,0 +1,14 @@
+# 集成的采集数据只落 CSV；图表 HTML/PNG 是本地分析仓库的产物，不进本仓库
+*.html
+*.png
+*.xls
+
+# 环境/缓存
+__pycache__/
+*.pyc
+.backup*/
+.badcache/
+
+# 数据库凭据（QMT 本地，绝不进仓库）
+.env
+qmt/.env

@@ -1,0 +1,42 @@
+name: 数据源可达性探针
+
+# 只手动触发 —— 这是一次性诊断，不是生产任务。
+# 目的：验证 GitHub runner（境外 IP）能否访问国内数据源。
+# 这是「用 GitHub Actions 补采快照型数据」方案唯一的未知数，跑一次即可定论。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # 项目内多处按**中国时区**做「盘中/盘后」判定（如 16:00 规则、
+      # 交易日/快照新鲜度判断），runner 默认 UTC 会错位 8 小时，必须显式设置。
+      TZ: Asia/Shanghai
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 运行探针
+        env:
+          LIXINGER_TOKEN: ${{ secrets.LIXINGER_TOKEN }}
+        run: python probe_sources.py
+
+      - name: 失败时提示
+        if: failure()
+        run: |
+          echo "::warning::关键数据源在 GitHub runner 上不可达，云端方案需改用国内 VPS"
