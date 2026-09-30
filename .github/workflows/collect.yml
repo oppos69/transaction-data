@@ -1,11 +1,12 @@
 name: 快照数据采集
 
-# 每天盘后（约 15:35 北京）补采快照型 A 股数据；也支持手动触发冒烟。
+# 每天 17:00 北京补采快照型 A 股数据；也支持手动触发冒烟。
 # 交易日由 collect_snapshots 里的 trade_calendar.guard() 判定，非交易日无变更、不产生空提交。
 on:
   schedule:
-    # cron 用 UTC。15:35 北京 = 07:35 UTC。避开整点防止跟探针/其他仓库撞车。
-    - cron: "35 7 * * *"
+    # cron 用 UTC。17:00 北京 = 09:00 UTC。收盘(15:00)后留足 2 小时，等数据源出最终收盘快照
+    # （15:35 太贴收盘，同花顺板块汇总/sina 等常未定稿）。GitHub schedule 常有几分钟延迟，属正常。
+    - cron: "0 9 * * *"
   workflow_dispatch:
 
 concurrency:
